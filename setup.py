@@ -13,8 +13,11 @@ REQS: Final = [
   if not line.startswith('#')
 ]
 
+NAME: str = 'unpackable'
+
 
 setup(
   name=NAME,
   install_requires=REQS,
+  packages=[NAME]
 )
