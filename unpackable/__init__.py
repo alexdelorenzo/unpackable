@@ -1,10 +1,11 @@
 from __future__ import annotations
-from typing import Iterator, Any, Final, Iterable
-from functools import partial
+from typing import Final, Iterator, Iterable, Any, \
+  Sequence
 
 
 PRIVATE: Final[str] = '_'
 ITER: Final[str] = '__iter__'
+DICT: Final[str] = '__dict__'
 
 
 class Unpackable:
@@ -16,14 +17,10 @@ class Unpackable:
 
 
 def iter_vals(obj: Any) -> Iterable[Any]:
-  attrs: set[str] = {
-    *dir(obj),
-    *obj.__dict__,
-  }
+  if not hasattr(obj, DICT):
+    return
 
-  for attr in attrs:
-    val = getattr(obj, attr)
-
+  for attr, val in obj.__dict__.items():
     if is_val(attr, val):
       yield val
 
