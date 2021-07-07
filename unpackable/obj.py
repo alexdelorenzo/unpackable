@@ -1,9 +1,14 @@
-from typing import Any, Callable, Optional, Sized, Final
-from inspect import isclass, getmro
+from __future__ import annotations
+from typing import Any, Callable, Optional, Sized, \
+  Iterable
 from types import DynamicClassAttribute
+from inspect import isclass, getmro
+
+from .types import HasIter, HasDict, Final
 
 
 DICT: Final[str] = '__dict__'
+SLOTS: Final[str] = '__slots__'
 
 
 Key = str
@@ -24,43 +29,48 @@ def sort_by_val(key_val: KeyVal) -> Val:
   return val
 
 
-def get_members(
+def gen_keys(
   obj: Any,
-  predicate: Optional[Predicate] = None,
-  sort: Optional[Sort] = None,
-) -> KeyVals:
+) -> Iterable[Key]:
   """Return all members of an obj as (name, value) pairs sorted by name.
   Optionally, only return members that satisfy a given predicate."""
-  mro: tuple[type]
-
-  if isclass(obj):
-      mro = (obj,) + getmro(obj)
-  else:
-      mro = ()
-
-  results: list[Key] = []
-  processed: set[KeyVals] = set()
-  names: list[Key]
-
   if hasattr(obj, DICT) and vars(obj):
-    names = list(obj.__dict__.keys())
+    yield from obj.__dict__.keys()
+
+  elif hasattr(obj, SLOTS):
+    yield from obj.__slots__
 
   else:
-    names = dir(obj)
+    yield from dir(obj)
 
-  # :dd any DynamicClassAttributes to the list of names if obj is a class;
+  # Add any DynamicClassAttributes to the list of names if obj is a class;
   # this may result in duplicate entries if, for example, a virtual
   # attribute with the same name as a DynamicClassAttribute exists
   try:
     for base in obj.__bases__:
-      for k, v in base.__dict__.items():
-        if isinstance(v, DynamicClassAttribute):
-          names.append(k)
+      for key, val in base.__dict__.items():
+        if isinstance(key, DynamicClassAttribute):
+          yield key
 
   except AttributeError:
       pass
 
-  for key in names:
+
+def gen_results(
+  obj: Any,
+  predicate: Optional[Predicate] = None,
+) -> Iterable[KeyVal]:
+  mro: tuple[type]
+
+  if isclass(obj):
+    mro = (obj,) + getmro(obj)
+
+  else:
+    mro = ()
+
+  processed: set[Key] = set()
+
+  for key in gen_keys(obj):
     # First try to get the value via getattr.  Some descriptors don't
     # like calling their __get__ (see bug #1785), so fall back to
     # looking in the __dict__.
@@ -76,15 +86,27 @@ def get_members(
         if key in base.__dict__:
           value = base.__dict__[key]
           break
+
       else:
         # could be a (currently) missing slot member, or a buggy
         # __dir__; discard and move on
         continue
 
     if not predicate or predicate(value):
-      results.append((key, value))
+      yield key, value
 
     processed.add(key)
+
+
+def get_members(
+  obj: Any,
+  predicate: Optional[Predicate] = None,
+  sort: Optional[Sort] = None,
+) -> KeyVals:
+  """Return all members of an obj as (name, value) pairs sorted by name.
+  Optionally, only return members that satisfy a given predicate."""
+  results_gen = gen_results(obj, predicate)
+  results = list(results_gen)
 
   if callable(sort):
     results.sort(key=sort)
