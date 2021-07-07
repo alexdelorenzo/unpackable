@@ -4,7 +4,8 @@ from typing import Any, Callable, Optional, Sized, \
 from types import DynamicClassAttribute
 from inspect import isclass, getmro
 
-from .types import HasIter, HasDict, Final
+from .types import HasIter, HasDict, Final, \
+  UnorderedAttributes
 
 
 DICT: Final[str] = '__dict__'
@@ -42,7 +43,7 @@ def gen_keys(
 
   else:
     name = type(obj).__name__
-    raise NotUnpackable(f"{name} isn't unpackable.")
+    raise UnorderedAttributes(f"{name} attribute order can't be determined.")
     # yield from dir(obj)
 
   # Add any DynamicClassAttributes to the list of names if obj is a class;
@@ -62,13 +63,10 @@ def gen_results(
   obj: Any,
   predicate: Optional[Predicate] = None,
 ) -> Iterable[KeyVal]:
-  mro: tuple[type]
+  mro: tuple[type] = ()
 
   if isclass(obj):
     mro = (obj,) + getmro(obj)
-
-  else:
-    mro = ()
 
   processed: set[Key] = set()
 

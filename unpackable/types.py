@@ -27,5 +27,9 @@ class Dataclass(Protocol):
     ...
 
 
-class NotUnpackable(Exception):
+class UnpackableException(Exception):
+  pass
+
+
+class AttributeOrderAmbiguous(UnpackableException):
   pass
