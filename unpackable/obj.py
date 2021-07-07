@@ -41,7 +41,9 @@ def gen_keys(
     yield from obj.__slots__
 
   else:
-    yield from dir(obj)
+    name = type(obj).__name__
+    raise NotUnpackable(f"{name} isn't unpackable.")
+    # yield from dir(obj)
 
   # Add any DynamicClassAttributes to the list of names if obj is a class;
   # this may result in duplicate entries if, for example, a virtual
