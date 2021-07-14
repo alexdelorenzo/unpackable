@@ -1,10 +1,14 @@
 from __future__ import annotations
 from typing import Iterator, Iterable, Any, \
   Sequence, Iterable
+from inspect import stack
 from dataclasses import is_dataclass, astuple
+import logging
 
 from .obj import get_members
-from .types import HasIter, HasDict, Final
+from .types import HasIter, Final, \
+  UnorderedAttributes, has_iter, has_dict, \
+  is_attr
 
 
 __all__: Final[list[str]] = [
@@ -15,49 +19,61 @@ __all__: Final[list[str]] = [
 ]
 
 
-PRIVATE: Final[str] = '_'
-DICT: Final[str] = '__dict__'
-
-
 class Unpackable:
   def __iter__(self) -> Iterator[Any]:
-    return iter(self.__unpack())
-
-  def __unpack(self) -> Iterable[Any]:
     if has_iter(super()):
       yield from super().__iter__()
+      return
 
     else:
-      yield from unpack_obj(self)
+      yield from unpack_obj(self, from_cls=True)
+      return
 
 
 def iter_vals(obj: Any) -> Iterable[Any]:
   attrs_vals = get_members(obj)
 
   for attr, val in attrs_vals:
-    if is_val(attr, val):
+    if is_attr(attr, val):
       yield val
 
 
-def unpack_obj(obj: Any) -> Iterable[Any]:
+def unpack_obj(obj: Any, from_cls: bool = False) -> Iterable[Any]:
   if is_dataclass(obj):
     yield from astuple(obj)
     return
 
-  elif has_dict(obj):
-    yield from iter_vals(obj)
-    return
-
   # try the built-in iter()
   try:
+    if has_dict(obj):
+      yield from iter_vals(obj)
+      return
+
     yield from iter(obj)
 
   except TypeError as e:
-    msg = f"{type(obj).__name__} isn't iterable and can't be unpacked."
-    raise TypeError(msg) from e
+    pass
+
+  if from_cls:
+    _, _, calling_frame, *_ = stack()
+
+  else:
+    _, _, _, calling_frame, *_ = stack()
+    print(calling_frame)
+
+  assignment_line, *_ = calling_frame.code_context
+
+  if '=' not in assignment_line:
+    raise UnorderedAttributes.from_obj(obj)
+
+  names, *_ = assignment_line.split('=')
+  names = (name.strip() for name in names.split(','))
+
+  for name in names:
+    yield getattr(obj, name)
 
 
-def unpack(obj: Any) -> Iterable[Any]:
+def unpack_gen(obj: Any) -> Iterable[Any]:
   if has_iter(obj):
     yield from obj.__iter__()
 
@@ -65,17 +81,11 @@ def unpack(obj: Any) -> Iterable[Any]:
     yield from unpack_obj(obj)
 
 
-def is_val(name: str, obj: Any) -> bool:
-  return not name.startswith(PRIVATE) \
-    and not callable(obj)
+def unpack(obj: Any) -> Iterable[Any]:
+  if can_unpack(obj):
+    return unpack_gen(obj)
 
-
-def has_dict(obj: Any) -> bool:
-  return hasattr(obj, DICT)
-
-
-def has_iter(obj: Any) -> bool:
-  return isinstance(obj, HasIter)
+  raise UnorderedAttributes.from_obj(obj)
 
 
 def can_unpack(obj: Any) -> bool:

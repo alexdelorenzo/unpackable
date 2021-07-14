@@ -2,13 +2,13 @@ from __future__ import annotations
 from typing import Any, Callable, Optional, Sized, \
   Iterable
 from types import DynamicClassAttribute
-from inspect import isclass, getmro
+from inspect import isclass, getmro, stack
+import logging
 
-from .types import HasIter, HasDict, Final, \
-  UnorderedAttributes
+from .types import HasIter, Final, \
+  UnorderedAttributes, DICT
 
 
-DICT: Final[str] = '__dict__'
 SLOTS: Final[str] = '__slots__'
 
 
@@ -35,6 +35,8 @@ def gen_keys(
 ) -> Iterable[Key]:
   """Return all members of an obj as (name, value) pairs sorted by name.
   Optionally, only return members that satisfy a given predicate."""
+  no_attrs: bool = False
+
   if hasattr(obj, DICT) and vars(obj):
     yield from obj.__dict__.keys()
 
@@ -42,8 +44,7 @@ def gen_keys(
     yield from obj.__slots__
 
   else:
-    name = type(obj).__name__
-    raise UnorderedAttributes(f"{name} attribute order can't be determined.")
+    no_attrs = True
     # yield from dir(obj)
 
   # Add any DynamicClassAttributes to the list of names if obj is a class;
@@ -55,8 +56,14 @@ def gen_keys(
         if isinstance(key, DynamicClassAttribute):
           yield key
 
+          if no_attrs:
+            no_attrs = False
+
   except AttributeError:
       pass
+
+  if no_attrs:
+    raise UnorderedAttributes.from_obj(obj)
 
 
 def gen_results(

@@ -1,18 +1,17 @@
 from __future__ import annotations
 from dataclasses import Field
-from typing import Iterator
+from typing import Iterator, Any
 
 try:
   from typing import Protocol, runtime_checkable, Final
 
 except ImportError:
-  from typing_extensions import Protocol, runtime_checkable, Final
+  from typing_extensions import Protocol, runtime_checkable, \
+    Final
 
 
-@runtime_checkable
-class HasDict(Protocol):
-  def __dict__(self) -> dict[str, Any]:
-    ...
+PRIVATE: Final[str] = '_'
+DICT: Final[str] = '__dict__'
 
 
 @runtime_checkable
@@ -31,5 +30,21 @@ class UnpackableException(Exception):
   pass
 
 
-class AttributeOrderAmbiguous(UnpackableException):
-  pass
+class UnorderedAttributes(UnpackableException, TypeError):
+  @classmethod
+  def from_obj(cls: type, obj: Any) -> UnorderedAttributes:
+    msg = f"{type(obj).__name__} isn't iterable and can't be unpacked."
+    return cls(msg)
+
+
+def has_dict(obj: Any) -> bool:
+  return hasattr(obj, DICT)
+
+
+def has_iter(obj: Any) -> bool:
+  return isinstance(obj, HasIter)
+
+
+def is_attr(name: str, obj: Any) -> bool:
+  return not name.startswith(PRIVATE) \
+    and not callable(obj)
