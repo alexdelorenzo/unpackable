@@ -3,6 +3,7 @@ from typing import Final
 from setuptools import setup
 from pathlib import Path
 
+
 REQS: list[str] = Path('requirements.txt') \
   .read_text() \
   .splitlines()
@@ -10,7 +11,7 @@ REQS: list[str] = Path('requirements.txt') \
 REQS: Final = [
   line
   for line in REQS
-  if not line.startswith('#')
+  if line and not line.startswith('#')
 ]
 
 NAME: str = 'unpackable'

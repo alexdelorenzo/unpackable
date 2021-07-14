@@ -59,7 +59,7 @@ This is alpha software and is not ready for use beyond limited use cases like in
 
 # Installation
 ## Requirements
- - Python 3.7+
+ - Python 3.8+
 
 ## PyPI
 ```bash
