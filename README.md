@@ -7,12 +7,12 @@ Consider [JavaScript's destructuring assignment](https://developer.mozilla.org/e
 class User {
   constructor(id, email) {
     this.id = id;
-    this.width = width;
+    this.email = email;
   }
 }
 
 const user = new User(1, 'example@example.com')
-const {id, email} = user;
+const {id, email} = user;  // destructure
 ```
 
 `unpackable` allows you to do something similar in Python:
@@ -28,7 +28,7 @@ class User(Unpackable):
 
 
 user = User(1, 'example@example.com')
-id, email = user
+id, email = user  # destructure
 ```
 
 `unpackable` can also unpack objects that don't subclass `Unpackable`:
@@ -44,7 +44,7 @@ class User:
 
 
 user = User(1, 'example@example.com')
-id, email = unpack(user)
+id, email = unpack(user)  # destructure
 ```
 
 # Status
