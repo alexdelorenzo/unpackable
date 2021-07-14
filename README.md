@@ -4,11 +4,14 @@
 ## Use case
 Consider [JavaScript's destructuring assignment](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment) feature that allows you to do the following:
 ```javascript
-const user = {
-  id: 1,
-  email: 'example@example.org'
-};
+class User {
+  constructor(id, email) {
+    this.id = id;
+    this.width = width;
+  }
+}
 
+const user = new User(1, 'example@example.com')
 const {id, email} = user;
 ```
 
@@ -24,11 +27,7 @@ class User(Unpackable):
   email: str
 
 
-user = User(
-  id=1, 
-  email='example@example.com',
-)
-
+user = User(1, 'example@example.com')
 id, email = user
 ```
 
@@ -44,11 +43,7 @@ class User:
   email: str
 
 
-user = User(
-  id=1, 
-  email='example@example.com',
-)
-
+user = User(1, 'example@example.com')
 id, email = unpack(user)
 ```
 
