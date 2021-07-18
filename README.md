@@ -33,7 +33,6 @@ id, email = user  # destructure
 
 `unpackable` can also unpack objects that don't subclass `Unpackable`:
 ```python
-from dataclasses import dataclass
 from unpackable import unpack
 
 
