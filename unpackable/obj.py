@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Any, Callable, Optional, Sized, \
-  Iterable
+  Iterable, Tuple, List
 from types import DynamicClassAttribute
 from inspect import isclass, getmro, stack
 import logging
@@ -14,8 +14,8 @@ SLOTS: Final[str] = '__slots__'
 
 Key = str
 Val = Any
-KeyVal = tuple[Key, Val]
-KeyVals = list[KeyVal]
+KeyVal = Tuple[Key, Val]
+KeyVals = List[KeyVal]
 Sort = Callable[[KeyVal], Sized]
 Predicate = Callable[[Val], bool]
 
