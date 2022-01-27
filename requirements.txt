@@ -1,1 +1,2 @@
 typing-extensions>=3.10.0.0; python_version < '3.10'
+varname>=0.8.1, <=0.9.0
